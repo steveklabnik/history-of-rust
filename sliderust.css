@@ -1,0 +1,50 @@
+body {
+    max-width: 1125px;
+}
+
+h1 {
+    font-size: 70px;
+}
+
+body, h5 {
+    font-size: 35px;
+}
+
+pre {
+    font-size: 30px;
+}
+
+section {
+    display: none;
+}
+
+section.current {
+    display: block;
+}
+
+section.title-slide {
+    text-align: center;
+    font-weight: bold;
+    font-size: 150%;
+}
+
+code.language-text {
+    /* Servo doesn't support pre-wrap yet */
+    white-space: normal;
+}
+
+body, h1, h2, h3, h4, h5, h6, nav {
+    font-family: sans-serif;
+}
+
+pre, code {
+    font-family: monospace;
+}
+
+ul {
+    list-style: none;
+}
+
+li::before {
+    content: "\2022\A0";
+}
