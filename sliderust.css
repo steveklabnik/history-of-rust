@@ -42,9 +42,5 @@ pre, code {
 }
 
 ul {
-    list-style: none;
-}
-
-li::before {
-    content: "\2022\A0";
+    list-style: circle;
 }
