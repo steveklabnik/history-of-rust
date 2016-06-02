@@ -225,11 +225,11 @@ rec(task task, chan[T] chan)
 Case study: Channels
 
 ```
-use std::thread::Thread;
+use std::thread::JoinHandle;
 use std::sync::mpsc::{Sender,Receiver};
 
-struct Foo<T> {
-    thread: Thread,
+struct Foo<T, H> {
+    thread: JoinHandle<H>,
     chan: (Sender<T>, Receiver<T>),
 }
 ```

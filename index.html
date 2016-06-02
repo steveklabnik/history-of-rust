@@ -416,11 +416,11 @@ error: aborting due to previous error
 
 <h1 id='intermezzo-rust-today-concurrency' class='section-header'><a href='#intermezzo-rust-today-concurrency'>Intermezzo: Rust today: Concurrency</a></h1>
 <pre class='rust rust-example-rendered'>
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>Thread</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
     <span class='kw'>let</span> <span class='ident'>guards</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='number'>10</span>).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> {
-        <span class='ident'>Thread</span>::<span class='ident'>scoped</span>(<span class='op'>||</span> {
+        <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='op'>||</span> {
             <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello, world!&quot;</span>);
         })
     }).<span class='ident'>collect</span>();
@@ -428,16 +428,14 @@ error: aborting due to previous error
 
 <h1 id='intermezzo-rust-today-concurrency-1' class='section-header'><a href='#intermezzo-rust-today-concurrency-1'>Intermezzo: Rust today: Concurrency</a></h1>
 <pre class='rust rust-example-rendered'>
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>Thread</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>numbers</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
-
-    <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> {
-        <span class='ident'>Thread</span>::<span class='ident'>scoped</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='kw'>for</span> <span class='ident'>j</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> { <span class='ident'>numbers</span>[<span class='ident'>j</span>] <span class='op'>+=</span> <span class='number'>1</span> }
-        });
-    }
+    <span class='kw'>let</span> <span class='ident'>guards</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='number'>10</span>).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> {
+        <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='op'>||</span> {
+            <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Hello, world!&quot;</span>);
+        })
+    }).<span class='ident'>collect</span>();
 }</pre>
 
 <hr>
@@ -452,17 +450,24 @@ error: aborting due to previous error
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
     <span class='kw'>let</span> <span class='ident'>numbers</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]));
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>handles</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
 
-    <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0us</span>..<span class='number'>3</span> {
+    <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> {
         <span class='kw'>let</span> <span class='ident'>number</span> <span class='op'>=</span> <span class='ident'>numbers</span>.<span class='ident'>clone</span>();
 
-        <span class='ident'>Thread</span>::<span class='ident'>scoped</span>(<span class='kw'>move</span> <span class='op'>||</span> {
+        <span class='kw'>let</span> <span class='ident'>handle</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>array</span> <span class='op'>=</span> <span class='ident'>number</span>.<span class='ident'>lock</span>().<span class='ident'>unwrap</span>();
 
             <span class='ident'>array</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>;
 
             <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;numbers[{}] is {}&quot;</span>, <span class='ident'>i</span>, <span class='ident'>array</span>[<span class='ident'>i</span>]);
         });
+
+        <span class='ident'>handles</span>.<span class='ident'>push</span>(<span class='ident'>handle</span>);
+    }
+
+    <span class='kw'>for</span> <span class='ident'>handle</span> <span class='kw'>in</span> <span class='ident'>handles</span> {
+        <span class='ident'>handle</span>.<span class='ident'>join</span>().<span class='ident'>unwrap</span>();
     }
 }</pre>
 
@@ -471,15 +476,13 @@ error: aborting due to previous error
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>crossbeam</span>;
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='kw'>let</span> <span class='ident'>numbers</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]));
-
-    <span class='kw'>let</span> <span class='ident'>array</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
+    <span class='kw'>let</span> <span class='ident'>numbers</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
     
     <span class='ident'>crossbeam</span>::<span class='ident'>scope</span>(<span class='op'>|</span><span class='ident'>scope</span><span class='op'>|</span> {
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>array</span> {
+        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>numbers</span> {
             <span class='ident'>scope</span>.<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='ident'>array</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>;
-                <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;element: {}&quot;</span>, <span class='ident'>i</span>);
+                <span class='ident'>numbers</span>[<span class='ident'>i</span>] <span class='op'>+=</span> <span class='number'>1</span>;
+                <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;numbers[{}] is {}&quot;</span>, <span class='ident'>i</span>, <span class='ident'>numbers</span>[<span class='ident'>i</span>]);
             });
         }
     });
