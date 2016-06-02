@@ -12,6 +12,8 @@ Steve Klabnik
 
 - It's been in development a long time.
 
+- It's been one year since 1.0.
+
 - I'm here to tell you about that.
 
 # Let's talk about Rust
@@ -30,11 +32,6 @@ First, let's talk about why you should care about this story.
 
 - As things change, the paradigm (and hence the epoch) changes
 
-# Totally not Marx
-
-> The history of all hitherto existing Rust is the history of 1.0 shipping
-> struggles.
-
 # Epoch Rust
 
 Rust has undergone four epochs so far:
@@ -45,7 +42,9 @@ Rust has undergone four epochs so far:
 
 - The Typesystem Years (2012-2014)
 
-- The Release Year (2015)
+- The Release Year (2015 -> May 2016)
+
+We are now entering a new epoch: The Production Year (May 2016 -> ?)
 
 # Moving between epochs
 
@@ -90,6 +89,8 @@ Rust has undergone four epochs so far:
 - The Typesystem Years (2012-2014)
 
 - The Release Year (2015)
+
+We are now entering a new epoch: The Production Year (May 2016 -> ?)
 
 # The Personal Years
 
@@ -339,7 +340,7 @@ March 2014: RFC process begins
 
 - Inspired by Python's PEP
 - for introducing "significant" language changes
-- 419 submitted so far, 122 accepted, 80 open
+- 1632 submitted so far, 243 accepted, 69 open
 - Even the core team goes through this process
 
 # Intermezzo: Rust today: Ownership
@@ -428,11 +429,11 @@ error: aborting due to previous error
 # Intermezzo: Rust today: Concurrency
 
 ```
-use std::thread::Thread;
+use std::thread;
 
 fn main() {
     let guards: Vec<_> = (0..10).map(|_| {
-        Thread::scoped(|| {
+        thread::spawn(|| {
             println!("Hello, world!");
         })
     }).collect();
@@ -442,16 +443,14 @@ fn main() {
 # Intermezzo: Rust today: Concurrency
 
 ```
-use std::thread::Thread;
+use std::thread;
 
 fn main() {
-    let mut numbers = vec![1, 2, 3];
-
-    for i in 0..3 {
-        Thread::scoped(move || {
-            for j in 0..3 { numbers[j] += 1 }
-        });
-    }
+    let guards: Vec<_> = (0..10).map(|_| {
+        thread::spawn(|| {
+            println!("Hello, world!");
+        })
+    }).collect();
 }
 ```
 
@@ -469,18 +468,44 @@ use std::sync::{Arc, Mutex};
 
 fn main() {
     let numbers = Arc::new(Mutex::new(vec![1, 2, 3]));
+    let mut handles = Vec::new();
 
-    for i in 0us..3 {
+    for i in 0..3 {
         let number = numbers.clone();
 
-        Thread::scoped(move || {
+        let handle = thread::spawn(move || {
             let mut array = number.lock().unwrap();
 
             array[i] += 1;
 
             println!("numbers[{}] is {}", i, array[i]);
         });
+
+        handles.push(handle);
     }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+}
+```
+
+# Intermezzo: Rust today: Concurrency
+
+```
+extern crate crossbeam;
+
+fn main() {
+    let numbers = [1, 2, 3];
+    
+    crossbeam::scope(|scope| {
+        for i in &mut numbers {
+            scope.spawn(move || {
+                numbers[i] += 1;
+                println!("numbers[{}] is {}", i, numbers[i]);
+            });
+        }
+    });
 }
 ```
 
@@ -488,9 +513,7 @@ fn main() {
 
 * Rust 1.0.0-alpha – Friday, Jan 9, 2015
 * Rust 1.0.0-beta1 – Week of Feb 16, 2015
-* Rust 1.0.0 – One or more six-week cycles later
-
-Goal: get _some_ Rust into Firefox by the end of 2015.
+* Rust 1.0.0 – May 15, 2015
 
 # The Release Year
 
@@ -500,17 +523,17 @@ It's not just about the language, it's about the ecosystem.
 
 It's not just about the language, it's about the tooling.
 
-It's not just about the language, it's about the community.
-
 It's not just about the language, it's about stability.
+
+It's not just about the language, it's about the community.
 
 # The Release Year
 
 Ecosystem:
 
 - Cargo + Crates.io = Super easy sharing of code
-- 1,300 crates on crates.io _last night_ (when I checked)
-- 470 total contributors to `rustc`
+- 5,055 crates on crates.io _last night_ (when I checked)
+- 1,410 total contributors to `rustc`
 - Big areas: game dev, operating systems, web development
 
 # The Release Year
@@ -519,16 +542,8 @@ Tooling:
 
 - Cargo. Never write a `Makefile` again.
 - `rustfmt`: coming soon
-- IDE integration: just starting
+- IDE integration: pretty okay!
 - `rustfix`: not as strongly needed because...
-
-# The Release Year
-
-Community:
-
-- We have a code of conduct. Treat each other like humans. It's just software.
-- Quite a large number of meetups around the world for a prerelease language.
-- ~900 people on IRC until the Great Netsplit a few days ago
 
 # The Release Year
 
@@ -540,6 +555,25 @@ Stability:
 - Additive change is the way to go
 - Why do we make each other go on the upgrade treadmill?
 - Build every crate on crates.io as part of the release process
+
+# The Release Year
+
+Community:
+
+- We have a code of conduct. Treat each other like humans. It's just software.
+- A number of meetups around the world
+- ~1000 people on IRC
+
+# The Production Year
+
+Now that we've built a thing... time for people to use it!
+
+# The Production Year
+
+- Mozilla: Firefox 45 has Rust inside! (> 1 billion executions, 100% correctness)
+- Dropbox: core of the product now in Rust
+- Tilde: Skylight.io is a Ruby gem with Rust inside, 2 crashes in the last 4 years
+- 22 organizations at [https://www.rust-lang.org/friends.html](https://www.rust-lang.org/friends.html)
 
 # That's it!
 
