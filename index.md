@@ -496,13 +496,13 @@ fn main() {
 extern crate crossbeam;
 
 fn main() {
-    let numbers = [1, 2, 3];
-    
+    let mut numbers = [1, 2, 3];
+
     crossbeam::scope(|scope| {
-        for i in &mut numbers {
+        for (i, number) in numbers.iter_mut().enumerate() {
             scope.spawn(move || {
-                numbers[i] += 1;
-                println!("numbers[{}] is {}", i, numbers[i]);
+                *number += 1;
+                println!("numbers[{}] is {}", i, number);
             });
         }
     });
